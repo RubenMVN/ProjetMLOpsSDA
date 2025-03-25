@@ -5,3 +5,7 @@ scikit-learn
 mlflow
 joblib
 flask
+black
+pylint
+pytest
+boto3
