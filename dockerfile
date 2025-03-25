@@ -8,10 +8,11 @@ WORKDIR /app
 COPY . /app
 
 # Étape 4 : Installer les dépendances du projet
+RUN ls -l requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Étape 5 : Exposer le port sur lequel ton application va tourner
-EXPOSE 5000
+EXPOSE 8501
 
 # Étape 6 : Définir la commande à exécuter pour démarrer l'application
-CMD ["python", "app.py"]
+CMD ["streamlit","run", "app.py"]
