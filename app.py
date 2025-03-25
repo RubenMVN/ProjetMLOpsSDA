@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
+
 
 # Charger les données
 df = pd.read_csv(r"Loan_Data.csv")
@@ -66,3 +66,5 @@ if st.button("Prédire"):
     # Afficher les résultats
     st.write(f"Probabilité de défaut (Random Forest) : {rf_prediction:.2f}")
     st.write(f"Probabilité de défaut (Régression Logistique) : {lr_prediction:.2f}")
+
+st.run_server(host="0.0.0.0", port=8501)
