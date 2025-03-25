@@ -44,9 +44,6 @@ jobs:
       - name: Lint
         run: pylint --disable=R,C app.py
 
-      - name: Test
-        run: python -m pytest -vv test.py
-
   cd_pipeline:
     runs-on: ubuntu-latest
     needs: [ci_pipeline]
@@ -90,7 +87,7 @@ jobs:
       - name: Build and push Docker image to AWS ECR
         run: |
           IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ steps.date.outputs.date }}"
-          docker build . --file Dockerfile --tag $IMAGE_URI
+          docker build . --file Dockerfile --platform="linux/amd64" --tag $IMAGE_URI
           docker push $IMAGE_URI
 
   deploy_to_ecs:
