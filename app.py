@@ -67,4 +67,3 @@ if st.button("Prédire"):
     st.write(f"Probabilité de défaut (Random Forest) : {rf_prediction:.2f}")
     st.write(f"Probabilité de défaut (Régression Logistique) : {lr_prediction:.2f}")
 
-st.run_server(host="0.0.0.0", port=8501)
