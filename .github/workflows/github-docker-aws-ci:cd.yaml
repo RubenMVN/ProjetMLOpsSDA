@@ -11,7 +11,7 @@ env:
   ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
-  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  token: ${{ secrets.GH_TOKEN }}
 
 on:
   push:
