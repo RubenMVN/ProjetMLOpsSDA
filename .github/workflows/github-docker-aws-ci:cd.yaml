@@ -103,6 +103,9 @@ jobs:
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
           aws configure set default.region $AWS_DEFAULT_REGION
 
+      - name: Debug new task definition
+        run: cat new-task-definition.json
+
       - name: Get latest task definition
         run: |
           aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION \
