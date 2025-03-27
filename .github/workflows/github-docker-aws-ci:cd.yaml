@@ -121,7 +121,7 @@ jobs:
       - name: Update task definition with new image
         run: |
           IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ steps.date.outputs.date }}"
-          jq --arg IMAGE "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE' task-definition-updated.json > new-task-definition.json
+          jq --arg IMAGE "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE | .containerDefinitions[0].memoryReservation = 512' task-definition-updated.json > new-task-definition.json
 
       - name: Debug - Show new-task-definition.json content
         run: cat new-task-definition.json
