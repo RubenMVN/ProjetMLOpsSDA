@@ -11,7 +11,6 @@ env:
   ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
   ECS_TASK_DEFINITION: ${{ secrets.ECS_TASK_DEFINITION }}
-  
 
 on:
   push:
@@ -56,12 +55,12 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
+        run: echo "date=$(date +'%Y-%m-%d--%M-%S')" >> $GITHUB_ENV
 
       - name: Build and push Docker image to Docker Hub
         run: |
-          docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
-          docker push $DOCKER_USER/$REPO_NAME:${{ steps.date.outputs.date }}
+          docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ env.date }}
+          docker push $DOCKER_USER/$REPO_NAME:${{ env.date }}
 
   aws_cd_pipeline:
     runs-on: ubuntu-latest
@@ -80,15 +79,11 @@ jobs:
         run: |
           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
-      - name: Get current date
-        id: date
-        run: echo "::set-output name=date::$(date +'%Y-%m-%d--%M-%S')"
-
       - name: Build and push Docker image to AWS ECR
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ steps.date.outputs.date }}"
-          docker build . --file Dockerfile --platform="linux/amd64" --tag $IMAGE_URI
-          docker push $IMAGE_URI
+          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ env.date }}"
+          docker buildx create --use
+          docker buildx build --platform linux/amd64,linux/arm64 --push -t $IMAGE_URI .
 
   deploy_to_ecs:
     runs-on: ubuntu-latest
@@ -113,15 +108,15 @@ jobs:
 
       - name: Extract relevant fields from task definition
         run: |
-          jq '{family: .family, containerDefinitions: .containerDefinitions}' task-definition.json > task-definition-updated.json
+          jq '{family: .family, containerDefinitions: .containerDefinitions, executionRoleArn: .executionRoleArn}' task-definition.json > task-definition-updated.json
 
       - name: Debug - Show task-definition-updated.json content
         run: cat task-definition-updated.json
 
       - name: Update task definition with new image
         run: |
-          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ steps.date.outputs.date }}"
-          EXECUTION_ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/ecsTaskExecutionRole"  # Mets ici ton ARN
+          IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ env.date }}"
+          EXECUTION_ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/ecsTaskExecutionRole"
 
           jq --arg IMAGE "$IMAGE_URI" --arg ROLE_ARN "$EXECUTION_ROLE_ARN" \
             '.containerDefinitions[0].image = $IMAGE | 
