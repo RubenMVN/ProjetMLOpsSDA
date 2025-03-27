@@ -54,13 +54,13 @@ jobs:
         run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
       - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d--%M-%S')" >> $GITHUB_ENV
+        run: echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
 
       - name: Build and push Docker image to Docker Hub
         run: |
-          docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:${{ env.date }}
-          docker push $DOCKER_USER/$REPO_NAME:${{ env.date }}
+          IMAGE_TAG="${{ env.date }}"
+          docker build . --file Dockerfile --tag $DOCKER_USER/$REPO_NAME:$IMAGE_TAG
+          docker push $DOCKER_USER/$REPO_NAME:$IMAGE_TAG
 
   aws_cd_pipeline:
     runs-on: ubuntu-latest
@@ -79,11 +79,16 @@ jobs:
         run: |
           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
 
+      - name: Get current date
+        run: echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
       - name: Build and push Docker image to AWS ECR
         run: |
           IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ env.date }}"
+          echo "Using IMAGE_URI: $IMAGE_URI"
+
           docker buildx create --use
-          docker buildx build --platform linux/amd64,linux/arm64 --push -t $IMAGE_URI .
+          docker buildx build --platform linux/amd64,linux/arm64 --push -t "$IMAGE_URI" .
 
   deploy_to_ecs:
     runs-on: ubuntu-latest
@@ -108,7 +113,7 @@ jobs:
 
       - name: Extract relevant fields from task definition
         run: |
-          jq '{family: .family, containerDefinitions: .containerDefinitions, executionRoleArn: .executionRoleArn}' task-definition.json > task-definition-updated.json
+          jq '{family: .family, containerDefinitions: .containerDefinitions}' task-definition.json > task-definition-updated.json
 
       - name: Debug - Show task-definition-updated.json content
         run: cat task-definition-updated.json
