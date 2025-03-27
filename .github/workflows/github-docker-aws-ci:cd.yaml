@@ -121,13 +121,16 @@ jobs:
       - name: Update task definition with new image
         run: |
           IMAGE_URI="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME:${{ steps.date.outputs.date }}"
-          jq --arg IMAGE "$IMAGE_URI" \
+          EXECUTION_ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/ecsTaskExecutionRole"  # Mets ici ton ARN
+
+          jq --arg IMAGE "$IMAGE_URI" --arg ROLE_ARN "$EXECUTION_ROLE_ARN" \
             '.containerDefinitions[0].image = $IMAGE | 
-             .containerDefinitions[0].memoryReservation = 512 | 
-             .requiresCompatibilities = ["FARGATE"] | 
-             .networkMode = "awsvpc" | 
-             .cpu = "256" | 
-             .memory = "512"' \
+            .containerDefinitions[0].memoryReservation = 512 | 
+            .requiresCompatibilities = ["FARGATE"] | 
+            .networkMode = "awsvpc" | 
+            .executionRoleArn = $ROLE_ARN | 
+            .cpu = "256" | 
+            .memory = "512"' \
             task-definition-updated.json > new-task-definition.json
 
       - name: Debug - Show new-task-definition.json content
